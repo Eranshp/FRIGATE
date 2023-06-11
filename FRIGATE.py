@@ -53,17 +53,17 @@ class FRIGATE:
                  gamma: int = 3, fixed_cols_f: float = 0.1, eta: float = 0.5, MW: bool = True, parallel: bool =False,
                  logger_level: int = logging.INFO):
         """
-        Initializing a Frigate object and invokes a tun of the algorithm with the given parameters.
+        Initializing a Frigate object and invokes a run of the algorithm with the given parameters.
         :param df: a DataFrame object to be clustered, with no missing data. Rows are samples and columns are variables
         :param m_iterations: Number of iterations. Default is two times the number of variables (2*|V|)
-        :param k_clusters: Number of clusters. Default is None - k_clusters will be chosen with elbow method
+        :param k_clusters: Number of clusters. must be provided by the user. Can be determine by the Elbow method.
         :param cat_cols: List of categorical columns. Default is None. Default is 3.
         :param gamma: Weight factor for K-Prototype, if both categorical and continuous variables are present.
-        :param fixed_cols_f: Fraction of columns to use in each iteration. Default is 0.1.
+        :param fixed_cols_f: Fraction of features to use in each iteration. Default is 0.1.
         :param eta: Parameter for the update rule when using Multiplicative Weight. Default is 0.5.
         :param MW: A boolean factor that determines if to use Multiplicative Weights (MW). Default is True.
-        :param parallel:A boolean factor that determines if to run in parallel. Default is False.
-        :param logger_level: a logging level of logger. Default is logging.INFO.
+        :param parallel: A boolean factor that determines if to run in parallel. Default is False.
+        :param logger_level: A logging level of logger. Default is logging.INFO.
         """
         self.df = df
         self.variables = self.df.columns
@@ -88,7 +88,6 @@ class FRIGATE:
         self.results_with_scores = None  # A DataFrame of the ranked variables and their scores.
         self.MW = MW
         self.parallel = parallel
-
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logger_level, format='%(message)s')
 
@@ -231,9 +230,11 @@ class FRIGATE:
         """
         A full run of the FRIGATE algorithm
         """
+        self.logger.info("start FRIGATE")
 
         if self.k is None:
-            raise ValueError("K number of clusters must be provided")
+            raise ValueError("K number of clusters must be provided. The Elbow Method that can automatically "
+                             " find a suitable K is implemented")
 
         self.logger.info(f"k number of clusters is {self.k}")
 
@@ -245,7 +246,7 @@ class FRIGATE:
         # Checks is the code should run in parallel.
         if self.parallel:
             pool = mp.Pool(int(mp.cpu_count()*0.5))
-            results = [pool.apply(self.frigate_iteration_for_parallel) for p in range(self.m)]
+            results = [pool.apply(self.frigate_iteration) for p in range(self.m)]
             pool.close()
             pool.join()
 
