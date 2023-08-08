@@ -181,7 +181,7 @@ def full_simulation(logger, sigma, mu, gamma=2, number_of_informative_num_vars=2
             frsd_scores.append(frsd_results)
 
         # the frigate algorithms are tested on both types of data.
-        FRIGATE_obj = FRIGATE(df=df_num_cat, k_clusters=k_frigate, MW=False, cat_cols=cat_cols, parallel=paral, m_iterations=10)
+        FRIGATE_obj = FRIGATE(df=df_num_cat, k_clusters=k_frigate, MW=False, cat_cols=cat_cols, parallel=paral)
         results_FRIGATE = FRIGATE_obj.get_results()
         results_FRIGATE_num = [1 for x in results_FRIGATE[:(number_of_informative_vars)] if x in list(
             range(number_of_noise_num_vars, number_of_num_vars))]
@@ -195,7 +195,7 @@ def full_simulation(logger, sigma, mu, gamma=2, number_of_informative_num_vars=2
             logger.debug(f"results frigate cat = {results_frigate_cat}")
             frigate_scores_cat.append(results_frigate_cat)
 
-        FRIGATE_MW_obj = FRIGATE(df=df_num_cat, k_clusters=k_frigate, MW=True, cat_cols=cat_cols, parallel=paral, m_iterations=10)
+        FRIGATE_MW_obj = FRIGATE(df=df_num_cat, k_clusters=k_frigate, MW=True, cat_cols=cat_cols, parallel=paral)
         results_FRIGATE = FRIGATE_MW_obj.get_results()
         results_FRIGATE_MW_num = [1 for x in results_FRIGATE[:(number_of_informative_vars)] if x in list(
             range(number_of_noise_num_vars, number_of_num_vars))]

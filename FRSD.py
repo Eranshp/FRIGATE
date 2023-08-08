@@ -1,4 +1,3 @@
-import logging
 import random
 from sklearn.metrics import silhouette_score
 from sklearn.cluster import KMeans
@@ -12,8 +11,8 @@ class FRSD:
     # FRSD algorithm based on k-means clustering with 100 ranking solution (M=100) and |V|/2 variables in ech clustering
     # as proposed by Hong ea al. 2007. Correlation is measured with linear correlation coefficient, as it performed
     # better than symmetrical uncertainty in Hong ea al. 2007.
-    def __init__(self, df, number_of_subspaces: int = 200, fixed_cols_f: float = 0.06, k_min: int = 2, k_max: int = 20,
-                 parallel: bool =False, logger_level: int = logging.INFO):
+    def __init__(self, df, number_of_subspaces: int = 200, fixed_cols_f: float = 0.06, k_min: int = 2, k_max: int = None,
+                 parallel: bool =False):
         self.df = df
         self.variables = self.df.columns
         self.B = number_of_subspaces
@@ -25,8 +24,6 @@ class FRSD:
                                                                                 # each variable appeared in
         self.results = None
         self.results_with_scores = None  # A DataFrame of the ranked variables and their scores.
-        self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logger_level, format='%(message)s')
         self.frsd_algorithm()
 
     def get_results(self):
@@ -83,22 +80,22 @@ class FRSD:
         return final_scores_k
 
     def frsd_algorithm(self):
-        self.logger.info("start frsd")
+        print("start FRSD")
         psi = int(math.ceil(self.alpha*len(self.df.columns)))
-        self.k_max = min(math.ceil(math.sqrt(len(self.df))), 20)
+        if not self.k_max:
+            self.k_max = min(math.ceil(math.sqrt(len(self.df))), 20)
         values_k = list(range(self.k_min, self.k_max+1))
         initial_counts = [0] * len(self.df.columns)
         final_scores = pd.DataFrame([initial_counts], columns=self.df.columns)
         if self.parallel:
             pool = mp.Pool(int(mp.cpu_count()*0.5))
-            results = [pool.apply(self.frsd_for_k, args=(self.df, k, psi, self.B)) for k in values_k]
+            results = [pool.apply(self.frsd_for_k, args=(k, psi)) for k in values_k]
             pool.close()
             pool.join()
             final_scores = sum(results)
 
         else:
             for k in values_k:
-                self.logger.debug(f"k={k}")
                 count = pd.DataFrame([initial_counts], columns=self.df.columns)
                 scores_of_k = pd.DataFrame([initial_counts], columns=self.df.columns)
                 for i in range(self.B):

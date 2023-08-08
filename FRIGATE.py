@@ -8,7 +8,6 @@ from scipy.spatial import distance
 from kmodes.kprototypes import KPrototypes
 from kmodes.kmodes import KModes
 import multiprocessing as mp
-import logging
 
 
 def cluster_helper(labels: np.ndarray, n_clusters: int, df: pd.DataFrame):
@@ -50,8 +49,7 @@ class FRIGATE:
     A class representing a Frigate object.
     """
     def __init__(self, df: pd.DataFrame, m_iterations: int = None, k_clusters: int = None, cat_cols: list = None,
-                 gamma: int = 3, fixed_cols_f: float = 0.1, eta: float = 0.5, MW: bool = True, parallel: bool =False,
-                 logger_level: int = logging.INFO):
+                 gamma: int = 3, fixed_cols_f: float = 0.1, eta: float = 0.5, MW: bool = True, parallel: bool = False):
         """
         Initializing a Frigate object and invokes a run of the algorithm with the given parameters.
         :param df: a DataFrame object to be clustered, with no missing data. Rows are samples and columns are variables
@@ -88,8 +86,6 @@ class FRIGATE:
         self.results_with_scores = None  # A DataFrame of the ranked variables and their scores.
         self.MW = MW
         self.parallel = parallel
-        self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logger_level, format='%(message)s')
 
         if m_iterations is None:
             self.m = 2 * len(df.columns)
@@ -230,16 +226,14 @@ class FRIGATE:
         """
         A full run of the FRIGATE algorithm
         """
-        self.logger.info("start FRIGATE")
+        print("start FRIGATE")
 
         if self.k is None:
             raise ValueError("K number of clusters must be provided. The Elbow Method that can automatically "
                              " find a suitable K is implemented")
 
-        self.logger.info(f"k number of clusters is {self.k}")
-
         if self.MW and self.parallel:
-            self.logger.info("Both MW and parallel are set to True. MW cannot run in parallel, the code will run "
+            print("Both MW and parallel are set to True. MW cannot run in parallel, the code will run "
                              "sequentially")
             self.parallel = False
 
@@ -269,7 +263,6 @@ class FRIGATE:
                     self.update_weights(order, results[0])
 
 
-        self.logger.info("After FRIGATE iterations")
         # sorting the features according to their scores
         ordered_scores_dis_from_cen_per = (self.scores_dis_from_cen_per / self.counts.values).sort_values(axis=1,
                                                                                                      by="scores",

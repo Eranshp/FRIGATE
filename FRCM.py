@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import math
-import logging
 from sklearn.cluster import KMeans
 import multiprocessing as mp
 import random
@@ -54,7 +53,7 @@ class FRCM:
     affinity matrix created for each feature.  
     """
     def __init__(self, df: pd.DataFrame, t_iterations: int = 100, k_min: int = 2, k_max: int = 20,
-                 parallel: bool = False, logger_level: int = logging.INFO, upper_aff_mats: list = None):
+                 parallel: bool = False, upper_aff_mats: list = None):
         """
         Initializing an FRCM object and invokes a run of the algorithm with the given parameters.
         :param df: a DataFrame object to be clustered, with no missing data. Rows are samples and columns are variables
@@ -75,8 +74,6 @@ class FRCM:
         self.results_with_scores = None  # A DataFrame of the ranked variables and their scores.
         self.parallel = parallel
 
-        self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logger_level, format='%(message)s')
         self.T = t_iterations
         self.upper_aff_mats = upper_aff_mats
 
@@ -135,14 +132,13 @@ class FRCM:
         a full FRCM run
         :return:
         """
-        self.logger.info("start frcm")
+        print("start FRCM")
         self.k_max = min(math.ceil(math.sqrt(len(self.df))), self.k_max)
         list_of_k = list(range(self.k_min, self.k_max+1))
         variables = list(self.df.columns)
         if self.parallel:  # run in parallel
             pool = mp.Pool(int(mp.cpu_count()*0.5))
-            args = (variables, list_of_k, self.df)
-
+            args = (variables, list_of_k)
             results = [pool.apply(self.frcm_iteration, args=args) for i in range(self.T)]
             pool.close()
             pool.join()
@@ -158,7 +154,7 @@ class FRCM:
         consensus_mat = consensus_mat/self.T
         upper_consensus_mat = np.triu(consensus_mat, k=1)
 
-        self.logger.info("The production of clustering solutions in FRCM is done. calculating the features' scores")
+        print("The production of clustering solutions in FRCM is done. calculating the features' scores")
 
         z_scores = pd.DataFrame(columns=variables, index=[0])
         df_dis_pairs = None
